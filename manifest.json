@@ -1,0 +1,25 @@
+{
+  "name": "Example",
+  "description": "An example minimal ship",
+  "picture": "picture.png",
+  "version": "0.1.0",
+  "tags": [
+    "outgoing",
+    "incoming",
+    "batch",
+    "oneColumn"
+  ],
+  "settings": [],
+  "private_settings": [],
+  "deployment_settings": [],
+  "resources": [],
+  "readme": "readme.md",
+  "admin": "/auth/",
+  "ui": false,
+  "subscriptions": [
+    {
+      "url": "/notify"
+    }
+  ],
+  "schedules": []
+}
