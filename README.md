@@ -1,6 +1,8 @@
 
 `npm install`
-
+`touch .env`
+`set -o allexport`
+`source .env`
 `npm run start:dev`
 
 Watch out for production deployment, the `hull-node` it pointed at development branch,
