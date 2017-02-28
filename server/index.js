@@ -1,5 +1,6 @@
-import Hull from "hull/lib";
+import Hull from "hull";
 import Promise from "bluebird";
+import express from "express";
 
 // pick what we need from the hull-node
 import { batchHandler, notifHandler, actionHandler, batcherHandler, oAuthHandler } from "hull/lib/utils";
@@ -25,25 +26,26 @@ const service = {
  * patchedExpressApp = WebApp(expressApp);
  * @type {HullApp}
  */
-const app = new Hull.App({ port, hostSecret, service });
+const connector = new Hull.Connector({ port, hostSecret, service });
+const app = express();
 
-const server = app.server();
+connector.setupApp(app);
 
-server.use("/fetch-all", actionHandler((ctx, { query, body }) => {
+app.use("/fetch-all", actionHandler((ctx, { query, body }) => {
   console.log("fetch-all", ctx.segments.map(s => s.name), { query, body });
   return ctx.enqueue("fetchAll", { body });
 }));
 
-server.use("/webhook", batcherHandler((ctx, messages) => {
+app.use("/webhook", batcherHandler((ctx, messages) => {
   console.log("Batcher.messages", messages);
 }));
 
-server.use("/batch", batchHandler((ctx, users) => {
+app.use("/batch", batchHandler((ctx, users) => {
   const { service } = ctx;
   return service.sendUsers(users);
 }, { batchSize: 100, groupTraits: true }));
 
-server.use("/notify", notifHandler({
+app.use("/notify", notifHandler({
   userHandlerOptions: {
     groupTraits: true,
     maxSize: 6,
@@ -61,7 +63,7 @@ server.use("/notify", notifHandler({
   }
 }));
 
-server.use("/auth", oAuthHandler({
+app.use("/auth", oAuthHandler({
   name: "Hubspot",
   Strategy: HubspotStrategy,
   options: {
@@ -99,14 +101,16 @@ server.use("/auth", oAuthHandler({
   }
 }));
 
-app.worker().attach({
+connector.worker({
   exampleJob: (ctx, { users }) => {
     console.log("exampleJob", users.length);
   },
   fetchAll: (ctx, { body }) => {
     console.log("fetchAllJob", ctx.segments.map(s => s.name), body);
   }
-})
+});
 
 
-app.start({ worker: true, server: true });
+connector.startWorker();
+
+connector.startApp(app);
