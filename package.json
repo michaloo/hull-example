@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "bluebird": "^3.4.7",
-    "hull": "^0.11.0-beta.1",
+    "hull": "^0.11.0-beta.2",
     "passport-hubspot": "github:unity/passport-hubspot"
   }
 }

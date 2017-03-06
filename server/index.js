@@ -1,9 +1,9 @@
-import Hull from "hull";
+import Hull from "hull/src";
 import Promise from "bluebird";
 import express from "express";
 
 // pick what we need from the hull-node
-import { batchHandler, notifHandler, actionHandler, batcherHandler, oAuthHandler } from "hull/lib/utils";
+import { notifHandler, actionHandler, batcherHandler, oAuthHandler } from "hull/src/utils";
 
 import { Strategy as HubspotStrategy } from "passport-hubspot";
 
@@ -40,15 +40,10 @@ app.use("/webhook", batcherHandler((ctx, messages) => {
   console.log("Batcher.messages", messages);
 }));
 
-app.use("/batch", batchHandler((ctx, users) => {
-  const { service } = ctx;
-  return service.sendUsers(users);
-}, { batchSize: 100, groupTraits: true }));
-
 app.use("/notify", notifHandler({
   userHandlerOptions: {
     groupTraits: true,
-    maxSize: 6,
+    maxSize: 200,
     maxTime: 10000
   },
   handlers: {
@@ -57,7 +52,7 @@ app.use("/notify", notifHandler({
     },
     "user:update": (ctx, messages) => {
       const { client } = ctx;
-      console.log("users was updated", messages[0]);
+      console.log("processing messages", messages.length);
       client.logger.info("user was updated", messages.map(m => m.user.email));
     }
   }
@@ -100,6 +95,30 @@ app.use("/auth", oAuthHandler({
     success: "success.html"
   }
 }));
+
+app.get("/request", (req, res) => {
+  req.hull.client.utils.extract.request({
+      hostname: req.hostname,
+      path: "notify",
+      fields: ["id", "first_name"]
+    })
+    .then(() => {
+      res.end("ok");
+    }, (err) => {
+      res.end(err.stack || err);
+    })
+});
+
+app.get("/properties", (req, res) => {
+  req.hull.client.utils.properties.get()
+    .then((result) => {
+      console.log("RES", result);
+      res.json(result);
+    }, (err) => {
+      res.end(err.stack || err);
+    })
+});
+
 
 connector.worker({
   exampleJob: (ctx, { users }) => {
