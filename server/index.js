@@ -97,8 +97,7 @@ app.use("/auth", oAuthHandler({
 }));
 
 app.get("/request", (req, res) => {
-  req.hull.client.utils.extract.request({
-      hostname: req.hostname,
+  req.hull.helpers.requestExtract({
       path: "notify",
       fields: ["id", "first_name"]
     })
